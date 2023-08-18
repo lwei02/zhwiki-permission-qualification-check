@@ -353,11 +353,11 @@
                         var sApiParams3 = {
                             'action': 'query',
                             'format': 'json',
-                            'list': 'blocks',
-                            'bkusers': this.username,
-                            'bkprop': 'timestamp',
-                            'bkstart': 'now',
-                            'bklimit': '1',
+                            'list': 'logevents',
+                            'letype': 'block',
+                            'leprop': 'timestamp',
+                            'letitle': 'User:'.concat(this.username),
+                            'lelimit': '1',
                             'origin': '*'
                         }
 
@@ -370,8 +370,8 @@
                                 bError = 1
                             },
                             success: function(data) {
-                                if(data.query.blocks[0] != undefined) {
-                                    let d = new Date(data.query.blocks[0].timestamp)
+                                if(data.query.logevents[0] != undefined) {
+                                    let d = new Date(data.query.logevents[0].timestamp)
                                     aAccountStatus[3] = d.toISOString().slice(0, 19).replace('T', ' ')
                                 }else{
                                     aAccountStatus[3] = '1970-01-01 00:00:01'
