@@ -4,5 +4,5 @@
 # 关于Query
 接受`query_string`：`username`和`type`。其他信息略。
 
-#原理
+# 原理
 纯静态前端实现，向维基百科API和Meta API发送跨站查询请求。
