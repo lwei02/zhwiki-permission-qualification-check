@@ -355,7 +355,7 @@
                             'format': 'json',
                             'list': 'logevents',
                             'letype': 'block',
-                            'leprop': 'timestamp',
+                            'leprop': 'timestamp|details',
                             'letitle': 'User:'.concat(this.username),
                             'lelimit': '1',
                             'origin': '*'
@@ -371,8 +371,18 @@
                             },
                             success: function(data) {
                                 if(data.query.logevents[0] != undefined) {
-                                    let d = new Date(data.query.logevents[0].timestamp)
-                                    aAccountStatus[3] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                    if(data.query.logevents[0].params != undefined){
+                                        if(data.query.logevents[0].params.expiry != undefined) {
+                                            let d = new Date(data.query.logevents[0].params.expiry)
+                                            aAccountStatus[3] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                        }else{
+                                            let d = new Date(data.query.logevents[0].timestamp)
+                                            aAccountStatus[3] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                        }
+                                    }else{
+                                        let d = new Date(data.query.logevents[0].timestamp)
+                                        aAccountStatus[3] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                    }
                                 }else{
                                     aAccountStatus[3] = '1970-01-01 00:00:01'
                                 }
