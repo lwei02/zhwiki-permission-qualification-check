@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>中文维基百科权限资格检查</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="#">中文维基百科权限资格检查</a>
+            </div>
+        </nav>
+        <div class="m-3"></div>
+        <div class="container" id="baseFrame">
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-light">
+                            权限检查设置
+                        </div>
+                        <div class="card-body">
+                            <span>当前时间<br/>{{ timeNow }}</span><br/><br/>
+                            <form>
+                                <label for="username" class="form-label">用户名</label><br/>
+                                <input type="text" class="form-control" id="username" v-model="username"><br/>
+                                <label for="privType" class="form-label">权限类型</label><br/>
+                                <select class="form-select" id="privType" v-model="privType">
+                                    <option value="autoconfirmed">自动确认用户</option>
+                                    <option value="autoconfirmed_tor">自动确认用户（经由Tor出口）</option>
+                                    <option value="extendedconfirmed">扩展确认用户</option>
+                                    <option value="rollbacker">回退员</option>
+                                    <option value="patroller">巡查员</option>
+                                    <option value="autopatrolled">巡查豁免者</option>
+                                    <option value="templateeditor">模板编辑员</option>
+                                    <option value="abusefilterhelper">滥用过滤器助手</option>
+                                </select>
+                            </form>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary" style="float: right;" @click="checkPriv" v-if="checkBtnStat == 0">检查</button>
+                            <button class="btn btn-primary" style="float: right;" @click="checkPriv" v-if="checkBtnStat == 1" disabled>
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                检查中
+                            </button>
+                            <button class="btn btn-success" style="float: right;" @click="checkPriv" v-if="checkBtnStat == 2" disabled>
+                                <i class="bi bi-check-lg"></i>
+                                检查完成
+                            </button>
+                            <button class="btn btn-danger" style="float: right;" @click="checkPriv" v-if="checkBtnStat == 3" disabled>
+                                <i class="bi bi-x-lg"></i>
+                                请检查输入
+                            </button>
+                        </div>
+                    </div>
+                    <div class="m-3"></div>
+                </div>
+                <div class="col-sm-9">
+                    <div class="card" v-if="bShowResult">
+                        <div class="card-header text-light bg-success" v-if="bResultType">
+                            权限检查结果
+                        </div>
+                        <div class="card-header text-light bg-danger" v-if="!bResultType">
+                            权限检查结果
+                        </div>
+                        <div class="card-body">
+                            对用户 <b>{{ showusername }}</b> 的 <b>{{ ptrPrivType(showprivType) }}</b> 权限资格检查结果如下：<br/><br/>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">序号</th>
+                                        <th scope="col">项目</th>
+                                        <th scope="col">要求</th>
+                                        <th scope="col">实际</th>
+                                        <th scope="col">结果</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in results">
+                                        <td scope="row">{{ results.indexOf(item) + 1 }}</th>
+                                        <td>{{ item.desp }}</td>
+                                        <td>{{ item.demand }}</td>
+                                        <td>{{ item.actual }}</td>
+                                        <td v-if="item.result"><i class="bi bi-check-lg text-success"></i></td>
+                                        <td v-if="!item.result"><i class="bi bi-x-lg text-danger"></i></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <b>注意：</b>上述内容仅供参考。该页面仅进行基本的权限检查工作，页面显示您符合基本条件并不意味着您一定能获得该权限。另请不要将该页面的结果贴在申请页面上，管理员会自行检查您的基本资格是否符合要求。
+                        </div>
+                    </div>
+                    <div class="card" v-if="!bShowResult">
+                        <div class="card-header text-light" style="background-color: #6f42c1;">
+                            权限检查结果
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center m-sm-5" style="color:cornflowerblue">
+                                <i class="bi bi-search-heart" style="font-size: 500%"></i><br/>
+                                请先进行权限检查
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            const MONTH = 2592000
+            const YEAR = 31536000
+            const WEEK = 604800
+            const DAY = 86400
+            var time = new Date()
+            var query = new URLSearchParams(window.location.search)
+            if(query.has('username')) {
+                var _username = query.get('username')
+            } else {
+                var _username = ''
+            }
+            if(query.has('type')) {
+                var _privType = query.get('type')
+            } else {
+                var _privType = 'patroller'
+            }
+            const privRequirements = {
+                'autoconfirmed': [50, 604800, 0, 0, 1, 0, 0], // 本地编辑数，账号存续时长（秒），首次编辑至今时间，上次封禁至今时间，是否允许永久封禁，90日内平均每日编辑数，全域编辑数
+                'autoconfirmed_tor': [100, 7776000, 0, 0, 1, 0, 0],
+                'extendedconfirmed': [500, 7776000, 0, 0, 1, 0, 0],
+                'rollbacker': [1000, 0, 7776000, 31536000, 0, 1, 0],
+                'patroller': [250, 0, 2592000, 31536000, 0, 1, 0],
+                'autopatrolled': [0, 0, 0, 0, 0, 0, 0],
+                'templateeditor': [1000, 31536000, 0, 15552000, 0, 0, 0],
+                'abusefilterhelper': [0, 0, 7776000, 0, 0, 1, 1000],
+            }
+            const extendedRequirements = {
+                'autopatrolled': async function(us){
+                    let self = this
+                    var d = 0
+                    await $.ajax({
+                        url: "https://zh.wikipedia.org/w/api.php",
+                        data: {
+                            'action': 'query',
+                            'format': 'json',
+                            'list': 'usercontribs',
+                            'ucuser': us,
+                            'uclimit': '299',
+                            'ucshow': 'new',
+                            'ucprop': 'timestamp',
+                            'ucnamespace': '0',
+                            'origin': '*'
+                        },
+                        dataType: 'json',
+                        type: 'POST',
+                        success: (data) => {
+                            if(data.continue != undefined) {
+                                d = 300
+                            }else{
+                                d = data.query.usercontribs.length
+                            }
+                        },
+                        error: (xhr, status, error) => {
+                            return void 0
+                        }
+                    })
+                    var cb = {}
+                    if(d == 300){
+                        cb = {
+                            'desp': '条目空间新建页面数',
+                            'demand': '≥75',
+                            'actual': '≥300',
+                            'result': true
+                        }
+                    }else if (d >= 75){
+                        cb = {
+                            'desp': '条目空间新建页面数',
+                            'demand': '≥75',
+                            'actual': d,
+                            'result': true
+                        }
+                    }else{
+                        cb = {
+                            'desp': '条目空间新建页面数',
+                            'demand': '≥75',
+                            'actual': d,
+                            'result': false
+                        }
+                    }
+                    return cb
+
+                },
+                'templateeditor': async function(us){
+                    let self = this
+                    var d = 0
+                    await $.ajax({
+                        url: "https://zh.wikipedia.org/w/api.php",
+                        data: {
+                            'action': 'query',
+                            'format': 'json',
+                            'list': 'usercontribs',
+                            'ucuser': us,
+                            'uclimit': '299',
+                            'ucnamespace': '10|828',
+                            'origin': '*'
+                        },
+                        dataType: 'json',
+                        type: 'POST',
+                        success: (data) => {
+                            if(data.continue != undefined) {
+                                d = 300
+                            }else{
+                                d = data.query.usercontribs.length
+                            }
+                        },
+                        error: (xhr, status, error) => {
+                            return void 0
+                        }
+                    })
+                    var cb = {}
+                    if(d == 300){
+                        cb = {
+                            'desp': '模板空间编辑数',
+                            'demand': '≥150',
+                            'actual': '≥300',
+                            'result': true
+                        }
+                    }else if (d >= 150){
+                        cb = {
+                            'desp': '模板空间编辑数',
+                            'demand': '≥150',
+                            'actual': d,
+                            'result': true
+                        }
+                    }else{
+                        cb = {
+                            'desp': '模板空间编辑数',
+                            'demand': '≥150',
+                            'actual': d,
+                            'result': false
+                        }
+                    }
+                    return cb
+                }
+                    
+            }
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        timeNow: "".concat(time.toISOString().slice(0, 19).replace('T', ' ')),
+                        username: _username,
+                        privType: _privType,
+                        bShowResult: false,
+                        checkBtnStat: 0,
+                        results: [],
+                        bResult: 0,
+                        showusername: '',
+                        showprivType: '',
+                    }
+                },
+                mounted() {
+                    if(this.username != ''&& this.privType != '') {
+                        this.checkPriv()
+                    }
+                },
+                methods: {
+                    ptrPrivType(privType) {
+                        return $("".concat("#privType > option[value=", privType,"]")).text()
+                    },
+                    async checkPriv(){
+                        if(this.username == ""){
+                            this.checkBtnStat = 3
+                            setTimeout(() => {
+                                this.checkBtnStat = 0
+                            }, 1500)
+                            return
+                        }
+                        if(privRequirements[this.privType] == void 0){
+                            this.checkBtnStat = 3
+                            setTimeout(() => {
+                                this.checkBtnStat = 0
+                            }, 1500)
+                            return
+                        }
+                        $("#username").attr("disabled", "disabled")
+                        $("#privType").attr("disabled", "disabled")
+                        this.checkBtnStat = 1
+                        var bError = 0
+                        var self = this
+                        var sApiUrl = 'https://zh.wikipedia.org/w/api.php'
+                        var sApiParams = {
+                            'action': 'query',
+                            'format': 'json',
+                            'list': 'users',
+                            'usprop': 'editcount|registration|blockinfo',
+                            'ususers': this.username,
+                            'origin': '*'
+                        }
+
+                        var aAccountStatus = [0, 0, 0, 0, 0, 0]
+
+                        await $.ajax({
+                            url: sApiUrl,
+                            data: sApiParams,
+                            type: 'POST',
+                            dataType: 'json',
+                            error: (xhr, status, error) => {
+                                bError = 1
+                            },
+                            success: function(data) {
+                                aAccountStatus[0] = data.query.users[0].editcount
+                                let d = new Date(data.query.users[0].registration)
+                                aAccountStatus[1] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                if(data.query.users[0].blockid != undefined) {
+                                    if(data.query.users[0].blockexpiry == 'infinite') {
+                                        aAccountStatus[4] = 1
+                                    }     
+                                }
+                            }
+                        })
+
+                        var sApiParams2 = {
+                            'action': 'query',
+                            'format': 'json',
+                            'list': 'usercontribs',
+                            'ucuser': this.username,
+                            'ucprop': 'timestamp',
+                            'ucstart': '1',
+                            'ucdir': 'newer',
+                            'uclimit': '1',
+                            'origin': '*'
+                        }
+
+                        if (aAccountStatus[0] !== 0){
+                            await $.ajax({
+                                url: sApiUrl,
+                                data: sApiParams2,
+                                type: 'POST',
+                                dataType: 'json',
+                                error: (xhr, status, error) => {
+                                    bError = 1
+                                },
+                                success: function(data) {
+                                    let d = new Date(data.query.usercontribs[0].timestamp)
+                                    aAccountStatus[2] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                }
+                            })
+                        }else{
+                            aAccountStatus[2] = '2099-12-31 23:59:59'
+                        }
+
+                        var sApiParams3 = {
+                            'action': 'query',
+                            'format': 'json',
+                            'list': 'blocks',
+                            'bkusers': this.username,
+                            'bkprop': 'timestamp',
+                            'bkstart': 'now',
+                            'bklimit': '1',
+                            'origin': '*'
+                        }
+
+                        await $.ajax({
+                            url: sApiUrl,
+                            data: sApiParams3,
+                            type: 'POST',
+                            dataType: 'json',
+                            error: (xhr, status, error) => {
+                                bError = 1
+                            },
+                            success: function(data) {
+                                if(data.query.blocks[0] != undefined) {
+                                    let d = new Date(data.query.blocks[0].timestamp)
+                                    aAccountStatus[3] = d.toISOString().slice(0, 19).replace('T', ' ')
+                                }else{
+                                    aAccountStatus[3] = '1970-01-01 00:00:01'
+                                }
+                            }
+                        })
+                        var daysSinceReg = (Date.parse("".concat(this.timeNow.replace(" ","T"), "Z")) - Date.parse(aAccountStatus[1])) / 1000 / 60 / 60 / 24
+                        if (daysSinceReg < 90) {
+                            if (aAccountStatus[0] >= daysSinceReg){
+                                aAccountStatus[5] = 1
+                            }
+                        }else{
+                            var queryEndDate = new Date(Date.parse("".concat(this.timeNow.replace(" ","T"), "Z")) - 90 * 24 * 60 * 60 * 1000)
+                            var sApiParams4 = {
+                                'action': 'query',
+                                'format': 'json',
+                                'list': 'usercontribs',
+                                'ucuser': this.username,
+                                'ucprop': 'timestamp',
+                                'ucstart': "".concat(this.timeNow.replace(" ","T"), "Z"),
+                                'ucend': queryEndDate.toISOString().replace(".000",""),
+                                'ucdir': 'older',
+                                'uclimit': '89',
+                                'origin': '*'
+                            }
+                            await $.ajax({
+                                url: sApiUrl,
+                                data: sApiParams4,
+                                type: 'POST',
+                                dataType: 'json',
+                                error: (xhr, status, error) => {
+                                    bError = 1
+                                },
+                                success: function(data) {
+                                    if(data.continue != undefined) {
+                                        aAccountStatus[5] = 1
+                                    }
+                                }
+                            })
+                        }
+
+                        var sApiUrl2 = 'https://meta.wikimedia.org/w/api.php'
+                        var sApiParams5 = {
+                            'action': 'query',
+                            'format': 'json',
+                            'meta': 'globaluserinfo',
+                            'guiuser': this.username,
+                            'guiprop': 'editcount',
+                            'origin': '*'
+                        }
+                        await $.ajax({
+                            url: sApiUrl2,
+                            data: sApiParams5,
+                            type: 'POST',
+                            dataType: 'json',
+                            error: (xhr, status, error) => {
+                                bError = 1
+                            },
+                            success: function(data) {
+                                aAccountStatus[6] = data.query.globaluserinfo.editcount
+                            }
+                        })
+                        
+
+                        
+
+                        var results = [
+                            // {
+                            //     "desp": "",
+                            //     "demand": "",
+                            //     "actual": "",
+                            //     "result": true/false
+                            // }
+                        ]
+
+                        results.push({
+                            "desp": "编辑数",
+                            "demand": "".concat("≥", privRequirements[this.privType][0]),
+                            "actual": aAccountStatus[0],
+                            "result": aAccountStatus[0] >= privRequirements[this.privType][0]
+                        })
+
+
+                        var regDateDemand = new Date(Date.parse("".concat(this.timeNow.replace(" ","T"), "Z")) - privRequirements[this.privType][1] * 1000)
+                        results.push({
+                            "desp": "注册时间",
+                            "demand": "".concat("早于", regDateDemand.toISOString().slice(0, 19).replace('T', ' ')),
+                            "actual": aAccountStatus[1],
+                            "result": Date.parse(aAccountStatus[1]) <= regDateDemand
+                        })
+
+                        var initialEditDemand = new Date(Date.parse("".concat(this.timeNow.replace(" ","T"), "Z")) - privRequirements[this.privType][2] * 1000)
+                        results.push({
+                            "desp": "首次编辑时间",
+                            "demand": "".concat("早于", initialEditDemand.toISOString().slice(0, 19).replace('T', ' ')),
+                            "actual": aAccountStatus[2] == "2099-12-31 23:59:59" ? "无" : aAccountStatus[2],
+                            "result": Date.parse(aAccountStatus[2]) <= initialEditDemand
+                        })
+
+                        var lastBanDemand = new Date(Date.parse("".concat(this.timeNow.replace(" ","T"), "Z")) - privRequirements[this.privType][3] * 1000)
+                        results.push({
+                            "desp": "最近封禁时间",
+                            "demand": "".concat("早于", lastBanDemand.toISOString().slice(0, 19).replace('T', ' ')),
+                            "actual": aAccountStatus[3] == "1970-01-01 00:00:01" ? "无" : aAccountStatus[3],
+                            "result": Date.parse(aAccountStatus[3]) <= lastBanDemand
+                        })
+
+                        results.push({
+                            "desp": "存续的永久封禁",
+                            "demand": privRequirements[this.privType][4] ? "不限" : "无",
+                            "actual": aAccountStatus[4] ? "是" : "否",
+                            "result": aAccountStatus[4] <= privRequirements[this.privType][4]
+                        })
+
+                        results.push({
+                            "desp": "编辑活跃度",
+                            "demand": privRequirements[this.privType][5] ? "90天内（注册不满90天按注册日起算）平均每日一次编辑" : "无要求",
+                            "actual": "-",
+                            "result": aAccountStatus[5] == 1 || privRequirements[this.privType][5] == 0
+                        })
+
+                        results.push({
+                            "desp": "全域编辑次数",
+                            "demand": "≥".concat(privRequirements[this.privType][6]),
+                            "actual": aAccountStatus[6],
+                            "result": aAccountStatus[6] >= privRequirements[this.privType][6]
+                        })
+
+                        if(extendedRequirements[this.privType] != undefined) {
+                            await extendedRequirements[this.privType](this.username).then((result) => {
+                                results.push(result)
+                            })
+                        }
+                        var bResult = true
+                        for(item in results){
+                            if(!results[item].result){
+                                bResult = false
+                                break
+                            }
+                        }
+                        $("#username").removeAttr("disabled")
+                        $("#privType").removeAttr("disabled")
+                        console.log(results)
+                        this.results = results
+                        this.showprivType = this.privType
+                        this.showusername = this.username
+                        this.bShowResult = true
+                        this.bResultType = bResult ? 1 : 0
+
+                        if(bError){
+                            this.checkBtnStat = 3
+                        }else{
+                            this.checkBtnStat = 2
+                        }
+
+                        setTimeout(() => {
+                            this.checkBtnStat = 0
+                        }, 1500)
+                    }
+                }
+            })
+            app.mount('#baseFrame')
+        </script>
+    </body>
+</html>
