@@ -27,7 +27,7 @@
                 <div class="col-sm-3">
                     <div class="card">
                         <div class="card-header bg-secondary text-light">
-                            权限检查设置
+                            资格检查设置
                         </div>
                         <div class="card-body">
                             <span>当前时间<br/>{{ timeNow }}</span><br/><br/>
@@ -68,10 +68,10 @@
                 <div class="col-sm-9">
                     <div class="card" v-if="bShowResult">
                         <div class="card-header text-light bg-success" v-if="bResultType">
-                            权限检查结果
+                            资格检查结果
                         </div>
                         <div class="card-header text-light bg-danger" v-if="!bResultType">
-                            权限检查结果
+                            资格检查结果
                         </div>
                         <div class="card-body">
                             对用户 <b>{{ showusername }}</b> 的 <b>{{ ptrPrivType(showprivType) }}</b> 权限资格检查结果如下：<br/><br/>
@@ -96,17 +96,17 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <b>注意：</b>上述内容仅供参考。该页面仅进行基本的权限检查工作，页面显示您符合基本条件并不意味着您一定能获得该权限。另请不要将该页面的结果贴在申请页面上，管理员会自行检查您的基本资格是否符合要求。
+                            <b>注意：</b>上述内容仅供参考。该页面仅进行基本的资格检查工作，页面显示您符合基本条件并不意味着您一定能获得该权限。另请不要将该页面的结果贴在申请页面上，管理员会自行检查您的基本资格是否符合要求。
                         </div>
                     </div>
                     <div class="card" v-if="!bShowResult">
                         <div class="card-header text-light" style="background-color: #6f42c1;">
-                            权限检查结果
+                            资格检查结果
                         </div>
                         <div class="card-body">
                             <div class="text-center m-sm-5" style="color:cornflowerblue">
                                 <i class="bi bi-search-heart" style="font-size: 500%"></i><br/>
-                                请先进行权限检查
+                                还未进行资格检查
                             </div>
                         </div>
                     </div>
