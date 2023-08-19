@@ -526,9 +526,9 @@
                         })
 
                         results.push({
-                            "desp": "存续的永久封禁",
+                            "desp": "活跃无限期封禁",
                             "demand": privRequirements[this.privType][4] ? "不限" : "无",
-                            "actual": aAccountStatus[4] ? "是" : "否",
+                            "actual": aAccountStatus[4] ? "存在活跃无限期封禁" : "无",
                             "result": aAccountStatus[4] <= privRequirements[this.privType][4]
                         })
 
@@ -537,8 +537,8 @@
 
                         results.push({
                             "desp": "编辑活跃度",
-                            "demand": activityString1,
-                            "actual": activityString2,
+                            "demand": privRequirements[this.privType][5] ? activityString1 : "无要求",
+                            "actual": privRequirements[this.privType][5] ? activityString2 : "-"
                             "result": aAccountStatus[5] == 1 || privRequirements[this.privType][5] == 0
                         })
 
