@@ -43,7 +43,8 @@
                                     <option value="patroller">巡查员</option>
                                     <option value="autopatrolled">巡查豁免者</option>
                                     <option value="templateeditor">模板编辑员</option>
-                                    <option value="abusefilterhelper">滥用过滤器助手</option>
+                                    <option value="abusefilterhelper">过滤器助理</option>
+                                    <option value="abusefiltereditor">过滤器编辑者</option>
                                 </select>
                             </form>
                         </div>
@@ -143,6 +144,7 @@
                 'autopatrolled': [0, 0, 0, 0, 0, 0, 0],
                 'templateeditor': [1000, 31536000, 0, 15552000, 0, 0, 0],
                 'abusefilterhelper': [0, 0, 7776000, 31536000, 0, 1, 1000],
+                'abusefiltereditor': [1000, 0, 7776000, 31536000, 0, 1, 0],
             }
             const extendedRequirements = {
                 'autopatrolled': async function(us){
@@ -249,6 +251,76 @@
                             'actual': d,
                             'result': false
                         }
+                    }
+                    return cb
+                },
+                'abusefiltereditor': async function(us){
+                    let self = this
+                    let ec = 0
+                    let rightGroups = [false, false, false, false, false] // patroller, rollbacker, templateeditor, interface-admin, abusefilter-helper
+                    await $.ajax({
+                        url: "https://zh.wikipedia.org/w/api.php",
+                        data: {
+                            'action': 'query',
+                            'format': 'json',
+                            'list': 'users',
+                            'ususers': us,
+                            'usprop': 'editcount|groups',
+                            'origin': '*'
+                        },
+                        dataType: 'json',
+                        type: 'POST',
+                        success: (data) => {
+                            console.log(data)
+                            ec = data.query.users[0].editcount
+                            if(data.query.users[0].groups.includes('patroller')) {
+                                rightGroups[0] = true
+                            }
+                            if(data.query.users[0].groups.includes('rollbacker')) {
+                                rightGroups[1] = true
+                            }
+                            if(data.query.users[0].groups.includes('templateeditor')) {
+                                rightGroups[2] = true
+                            }
+                            if(data.query.users[0].groups.includes('interface-admin')) {
+                                rightGroups[3] = true
+                            }
+                            if(data.query.users[0].groups.includes('abusefilter-helper')) {
+                                rightGroups[4] = true
+                            }
+                        },
+                        error: (xhr, status, error) => {
+                            return void 0
+                        }
+                    })
+                    let cb = {}
+                    let sActual = ''
+                    let res = false;
+                    if(rightGroups[3] == true){
+                        sActual = "".concat(sActual, '已担任界面管理员；')
+                        res = true;
+                    }
+                    if((rightGroups[0] || rightGroups[1] || rightGroups[2]) && rightGroups[4]){
+                        sActual = "".concat(sActual, '已担任巡查员、回退员或模板编辑员，且已担任过滤器助理；')
+                        res = true;
+                    }else if(rightGroups[4]){
+                        sActual = "".concat(sActual, '已担任过滤器助理，未持其他权限；')
+                    }else if(rightGroups[0] || rightGroups[1] || rightGroups[2]){
+                        sActual = "".concat(sActual, '已担任巡查员、回退员或模板编辑员，未持过滤器助理权限；')
+                        res = true;
+                    }else{
+                        sActual = "".concat(sActual, '未持任何权限；')
+                    }
+                    if(ec >= 3000){
+                        sActual = "".concat(sActual, '编辑数≥3000；')
+                        res = true;
+                    }
+                    sActual = sActual.slice(0, -1)
+                    cb = {
+                        'desp': '额外资格要求',
+                        'demand': '见方针页',
+                        'actual': sActual,
+                        'result': res
                     }
                     return cb
                 }
