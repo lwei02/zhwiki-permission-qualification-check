@@ -140,7 +140,7 @@
                 'autoconfirmed_tor': [100, 7776000, 0, 0, 1, 0, 0],
                 'extendedconfirmed': [500, 7776000, 0, 0, 1, 0, 0],
                 'rollbacker': [1000, 0, 7776000, 31536000, 0, 1, 0],
-                'patroller': [250, 0, 2592000, 31536000, 0, 1, 0],
+                'patroller': [500, 0, 5184000, 31536000, 0, 1, 0],
                 'autopatrolled': [0, 0, 0, 0, 0, 0, 0],
                 'templateeditor': [1000, 31536000, 0, 15552000, 0, 0, 0],
                 'abusefilterhelper': [0, 0, 7776000, 31536000, 0, 1, 1000],
@@ -179,23 +179,23 @@
                     var cb = {}
                     if(d == 300){
                         cb = {
-                            'desp': '条目空间新建页面数',
-                            'demand': '≥75',
+                            'desp': '条目空间新建或重写页面数',
+                            'demand': '≥50',
                             'actual': '≥300',
                             'result': true
                         }
-                    }else if (d >= 75){
+                    }else if (d >= 50){
                         cb = {
-                            'desp': '条目空间新建页面数',
-                            'demand': '≥75',
-                            'actual': d,
+                            'desp': '条目空间新建或重写页面数',
+                            'demand': '≥50',
+                            'actual': ''.concat('≥', d),
                             'result': true
                         }
                     }else{
                         cb = {
-                            'desp': '条目空间新建页面数',
-                            'demand': '≥75',
-                            'actual': d,
+                            'desp': '条目空间新建或重写页面数',
+                            'demand': '≥50',
+                            'actual': ''.concat('新建页面数：', d, '，请提供重写条目', 50-d, '个'),
                             'result': false
                         }
                     }
@@ -427,8 +427,10 @@
                             'origin': '*'
                         }
 
+                        let proms = []
+
                         if (aAccountStatus[0] !== 0){
-                            await $.ajax({
+                            proms.push( $.ajax({
                                 url: sApiUrl,
                                 data: sApiParams2,
                                 type: 'POST',
@@ -440,7 +442,7 @@
                                     let d = new Date(data.query.usercontribs[0].timestamp)
                                     aAccountStatus[2] = d.toISOString().slice(0, 19).replace('T', ' ')
                                 }
-                            })
+                            }) )
                         }else{
                             aAccountStatus[2] = '2099-12-31 23:59:59'
                         }
@@ -456,7 +458,7 @@
                             'origin': '*'
                         }
 
-                        await $.ajax({
+                        proms.push( $.ajax({
                             url: sApiUrl,
                             data: sApiParams3,
                             type: 'POST',
@@ -482,7 +484,9 @@
                                     aAccountStatus[3] = '1970-01-01 00:00:01'
                                 }
                             }
-                        })
+                        }) )
+
+
                         var daysSinceReg = (Date.parse("".concat(this.timeNow.replace(" ","T"), "Z")) - Date.parse(aAccountStatus[1])) / 1000 / 60 / 60 / 24
                         var aas5Set = {
                             "registeredFor90Days": 1,
@@ -509,7 +513,7 @@
                                 'uclimit': '299',
                                 'origin': '*'
                             }
-                            await $.ajax({
+                            proms.push( $.ajax({
                                 url: sApiUrl,
                                 data: sApiParams4,
                                 type: 'POST',
@@ -528,7 +532,7 @@
                                         aas5Set["editsInLast90Days"] = data.query.usercontribs.length
                                     }
                                 }
-                            })
+                            }) )
                         }
 
                         var sApiUrl2 = 'https://meta.wikimedia.org/w/api.php'
@@ -540,7 +544,7 @@
                             'guiprop': 'editcount',
                             'origin': '*'
                         }
-                        await $.ajax({
+                        proms.push( $.ajax({
                             url: sApiUrl2,
                             data: sApiParams5,
                             type: 'POST',
@@ -551,8 +555,9 @@
                             success: function(data) {
                                 aAccountStatus[6] = data.query.globaluserinfo.editcount
                             }
-                        })
+                        }) )
                         
+                        await Promise.all(proms)
 
                         
 
